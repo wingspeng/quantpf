@@ -9,6 +9,7 @@ class HkListSpider(scrapy.Spider):
     def parse(self,response):
         # 从当前html中所有的table中挑选出class属性为table_grey_border的table,再在这个table下选择class属性为tr_normal的tr.
         stock_list = Selector(response=response).xpath('//table[@class="table_grey_border"]/tr[@class="tr_normal"]')
+        cnt = 0
         for stock in stock_list:
             item = HkStockListItem()
             item["code"] = stock.xpath('./td/text()').extract()[0]
@@ -17,6 +18,9 @@ class HkListSpider(scrapy.Spider):
             href = stock.xpath('./td/a/@href').extract()[0] #在当前节点下找td节点下的a节点,获取a节点下的href属性
             request = scrapy.Request(href,callback=self.parse_stock)
             request.meta['item'] = item
+            cnt = cnt + 1
+            if(cnt == 100):
+                break
             yield request
     def parse_stock(self,response):
         # 从当前html中挑选出colspan="3"且align="left"且height="18"且width="300"所有的td
